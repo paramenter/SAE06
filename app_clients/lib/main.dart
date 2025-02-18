@@ -191,14 +191,120 @@ class _DashboardPageState extends State<DashboardPage> {
 }
 
 // Page de l'Historique
-class HistoriquePage extends StatelessWidget {
+class HistoriquePage extends StatefulWidget {
+  @override
+  _HistoriquePageState createState() => _HistoriquePageState();
+}
+
+class _HistoriquePageState extends State<HistoriquePage> {
+  // URL de l'API pour l'historique
+  final String apiUrl =
+      'https://qjnieztpwnwroinqrolm.supabase.co/rest/v1/detail_livraisons?select=tournee_id,produit,qte,semaine';
+
+  // Clé API (à garder privée dans un vrai projet)
+  final String apiKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqbmllenRwd253cm9pbnFyb2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc4MTEwNTAsImV4cCI6MjA1MzM4NzA1MH0.orLZFmX3i_qR0H4H6WwhUilNf5a1EAfrFhbbeRvN41M';
+
+  // Fonction pour récupérer l'historique des livraisons
+  Future<List<dynamic>> fetchHistoricalDeliveries() async {
+    final response = await http.get(
+      Uri.parse(apiUrl),
+      headers: {
+        'apikey': apiKey,
+        'Authorization': 'Bearer $apiKey',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Erreur lors du chargement de l\'historique');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Historique des livraisons',
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Historique des Livraisons',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16.0),
+
+            // Utilisation de FutureBuilder pour afficher les données
+            Expanded(
+              child: FutureBuilder<List<dynamic>>(
+                future: fetchHistoricalDeliveries(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(
+                      child: Text('Erreur : ${snapshot.error}'),
+                    );
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(child: Text('Aucun historique trouvé.'));
+                  } else {
+                    final deliveries = snapshot.data!;
+                    return ListView.builder(
+                      itemCount: deliveries.length,
+                      itemBuilder: (context, index) {
+                        final delivery = deliveries[index];
+                        return Card(
+                          elevation: 4,
+                          margin: EdgeInsets.symmetric(vertical: 8.0),
+                          child: ListTile(
+                            title: Text(
+                              'Tournée ${delivery['tournee_id']} - Semaine ${delivery['semaine']}',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              'Produit : ${delivery['produit']} - Quantité : ${delivery['qte']}',
+                            ),
+                            onTap: () {
+                              _showDeliveryDetails(context, delivery);
+                            },
+                          ),
+                        );
+                      },
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  // Fonction pour afficher les détails d'une livraison
+  void _showDeliveryDetails(
+      BuildContext context, Map<String, dynamic> delivery) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Détails de la livraison'),
+          content: Text(
+            'Tournée : ${delivery['tournee_id']}\n'
+            'Semaine : ${delivery['semaine']}\n'
+            'Produit : ${delivery['produit']}\n'
+            'Quantité : ${delivery['qte']}',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Fermer'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
