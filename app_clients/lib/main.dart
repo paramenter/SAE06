@@ -33,7 +33,9 @@ class _HomePageState extends State<HomePage> {
   // Liste des pages à afficher
   final List<Widget> _pages = [
     DashboardPage(),
-    HistoriquePage(),
+    HistoriquePage(
+      adherentId: 47476,
+    ),
     NotificationsPage(),
   ];
 
@@ -48,7 +50,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Accueil Client'),
+        title: const Text('Info livraison jardin de cocagne'),
       ),
       body: _pages[_selectedIndex], // Affiche la page correspondant à l'index
       bottomNavigationBar: BottomNavigationBar(
@@ -133,7 +135,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: Text('Erreur : ${snapshot.error}'),
                     );
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('Aucune livraison trouvée.'));
+                    return const Center(
+                        child: Text('Aucune livraison trouvée.'));
                   } else {
                     // Affiche la liste des livraisons
                     final deliveries = snapshot.data!;
@@ -147,7 +150,8 @@ class _DashboardPageState extends State<DashboardPage> {
                           child: ListTile(
                             title: Text(
                               'Tournée ${delivery['tournee_id']}',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text(
                               'Produit : ${delivery['produit']} - Quantité : ${delivery['qte']}',
@@ -196,25 +200,24 @@ class _DashboardPageState extends State<DashboardPage> {
 
 // Page de l'Historique
 class HistoriquePage extends StatefulWidget {
-  const HistoriquePage({super.key});
+  final int adherentId; // Identifiant de l'adhérent
+
+  const HistoriquePage({super.key, required this.adherentId});
 
   @override
   _HistoriquePageState createState() => _HistoriquePageState();
 }
 
 class _HistoriquePageState extends State<HistoriquePage> {
-  // URL de l'API pour l'historique
-  final String apiUrl =
-      'https://qjnieztpwnwroinqrolm.supabase.co/rest/v1/detail_livraisons?select=tournee_id,produit,qte,semaine';
-
-  // Clé API (à garder privée dans un vrai projet)
+  final String baseUrl =
+      'https://qjnieztpwnwroinqrolm.supabase.co/rest/v1/detail_livraisons';
   final String apiKey =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqbmllenRwd253cm9pbnFyb2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc4MTEwNTAsImV4cCI6MjA1MzM4NzA1MH0.orLZFmX3i_qR0H4H6WwhUilNf5a1EAfrFhbbeRvN41M';
-
-  // Fonction pour récupérer l'historique des livraisons
-  Future<List<dynamic>> fetchHistoricalDeliveries() async {
+  Future<List<dynamic>> fetchUserDeliveries() async {
     final response = await http.get(
-      Uri.parse(apiUrl),
+      Uri.parse('$baseUrl?adherent_id=eq.${widget.adherentId}'
+          '&jour=lt.${DateTime.now().toIso8601String().substring(0, 10)}'
+          '&order=jour.desc'),
       headers: {
         'apikey': apiKey,
         'Authorization': 'Bearer $apiKey',
@@ -231,75 +234,56 @@ class _HistoriquePageState extends State<HistoriquePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('Historique des Livraisons')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Historique des Livraisons',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16.0),
-
-            // Utilisation de FutureBuilder pour afficher les données
-            Expanded(
-              child: FutureBuilder<List<dynamic>>(
-                future: fetchHistoricalDeliveries(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(
-                      child: Text('Erreur : ${snapshot.error}'),
-                    );
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('Aucun historique trouvé.'));
-                  } else {
-                    final deliveries = snapshot.data!;
-                    return ListView.builder(
-                      itemCount: deliveries.length,
-                      itemBuilder: (context, index) {
-                        final delivery = deliveries[index];
-                        return Card(
-                          elevation: 4,
-                          margin: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: ListTile(
-                            title: Text(
-                              'Tournée ${delivery['tournee_id']} - Semaine ${delivery['semaine']}',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: Text(
-                              'Produit : ${delivery['produit']} - Quantité : ${delivery['qte']}',
-                            ),
-                            onTap: () {
-                              _showDeliveryDetails(context, delivery);
-                            },
-                          ),
-                        );
+        child: FutureBuilder<List<dynamic>>(
+          future: fetchUserDeliveries(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Erreur : ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('Aucune livraison trouvée.'));
+            } else {
+              final deliveries = snapshot.data!;
+              return ListView.builder(
+                itemCount: deliveries.length,
+                itemBuilder: (context, index) {
+                  final delivery = deliveries[index];
+                  return Card(
+                    elevation: 4,
+                    margin: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: ListTile(
+                      title: Text('Livraison du ${delivery['jour']}'),
+                      subtitle: Text(
+                          'Dépôt : ${delivery['depot']}\nProduit : ${delivery['produit']} - Qté: ${delivery['qte']}'),
+                      onTap: () {
+                        _showDeliveryDetails(context, delivery);
                       },
-                    );
-                  }
+                    ),
+                  );
                 },
-              ),
-            ),
-          ],
+              );
+            }
+          },
         ),
       ),
     );
   }
 
-  // Fonction pour afficher les détails d'une livraison
   void _showDeliveryDetails(
       BuildContext context, Map<String, dynamic> delivery) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Détails de la livraison'),
+          title: const Text('Détails de la Livraison'),
           content: Text(
-            'Tournée : ${delivery['tournee_id']}\n'
-            'Semaine : ${delivery['semaine']}\n'
+            'Nom : ${delivery['adherent']}\n'
+            'Adresse : ${delivery['adresse_id']}\n' // Adresse à récupérer correctement
+            'Dépôt : ${delivery['depot']}\n'
             'Produit : ${delivery['produit']}\n'
             'Quantité : ${delivery['qte']}',
           ),
