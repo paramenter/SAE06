@@ -32,7 +32,9 @@ class _HomePageState extends State<HomePage> {
 
   // Liste des pages à afficher
   final List<Widget> _pages = [
-    DashboardPage(),
+    DashboardPage(
+      adherentId: 47476,
+    ),
     HistoriquePage(
       adherentId: 47476,
     ),
@@ -77,25 +79,26 @@ class _HomePageState extends State<HomePage> {
 
 // Page du Tableau de bord
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  final int adherentId; // Identifiant de l'adhérent
+
+  const DashboardPage({super.key, required this.adherentId});
 
   @override
   _DashboardPageState createState() => _DashboardPageState();
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // URL de l'API
-  final String apiUrl =
-      'https://qjnieztpwnwroinqrolm.supabase.co/rest/v1/detail_livraisons?semaine=eq.9&select=tournee_id,produit,qte';
-
-  // Clé API (à garder privée dans un vrai projet)
+  final String baseUrl =
+      'https://qjnieztpwnwroinqrolm.supabase.co/rest/v1/detail_livraisons';
   final String apiKey =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqbmllenRwd253cm9pbnFyb2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc4MTEwNTAsImV4cCI6MjA1MzM4NzA1MH0.orLZFmX3i_qR0H4H6WwhUilNf5a1EAfrFhbbeRvN41M';
 
-  // Fonction pour récupérer les données de l'API
-  Future<List<dynamic>> fetchDeliveries() async {
+  Future<List<dynamic>> fetchUpcomingDeliveries() async {
     final response = await http.get(
-      Uri.parse(apiUrl),
+      Uri.parse('$baseUrl?adherent_id=eq.${widget.adherentId}'
+          '&jour=gte.${DateTime.now().toIso8601String().substring(0, 10)}'
+          '&order=jour.asc'
+          '&limit=10'),
       headers: {
         'apikey': apiKey,
         'Authorization': 'Bearer $apiKey',
@@ -105,84 +108,65 @@ class _DashboardPageState extends State<DashboardPage> {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Erreur lors du chargement des livraisons');
+      throw Exception('Erreur lors du chargement des livraisons à venir');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('Tableau de Bord')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Tableau de bord des Livraisons',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16.0),
-
-            // Utilisation de FutureBuilder pour afficher les données dynamiques
-            Expanded(
-              child: FutureBuilder<List<dynamic>>(
-                future: fetchDeliveries(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(
-                      child: Text('Erreur : ${snapshot.error}'),
-                    );
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(
-                        child: Text('Aucune livraison trouvée.'));
-                  } else {
-                    // Affiche la liste des livraisons
-                    final deliveries = snapshot.data!;
-                    return ListView.builder(
-                      itemCount: deliveries.length,
-                      itemBuilder: (context, index) {
-                        final delivery = deliveries[index];
-                        return Card(
-                          elevation: 4,
-                          margin: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: ListTile(
-                            title: Text(
-                              'Tournée ${delivery['tournee_id']}',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: Text(
-                              'Produit : ${delivery['produit']} - Quantité : ${delivery['qte']}',
-                            ),
-                            onTap: () {
-                              _showDeliveryDetails(context, delivery);
-                            },
-                          ),
-                        );
+        child: FutureBuilder<List<dynamic>>(
+          future: fetchUpcomingDeliveries(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Erreur : ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('Aucune livraison prévue.'));
+            } else {
+              final deliveries = snapshot.data!;
+              return ListView.builder(
+                itemCount: deliveries.length,
+                itemBuilder: (context, index) {
+                  final delivery = deliveries[index];
+                  return Card(
+                    elevation: 4,
+                    margin: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: ListTile(
+                      title: Text('Livraison du ${delivery['jour']}'),
+                      subtitle: Text(
+                        'Dépôt : ${delivery['depot']}\n'
+                        'Produit : ${delivery['produit']} - Qté: ${delivery['qte']}',
+                      ),
+                      onTap: () {
+                        _showDeliveryDetails(context, delivery);
                       },
-                    );
-                  }
+                    ),
+                  );
                 },
-              ),
-            ),
-          ],
+              );
+            }
+          },
         ),
       ),
     );
   }
 
-  // Fonction pour afficher les détails d'une livraison
   void _showDeliveryDetails(
       BuildContext context, Map<String, dynamic> delivery) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Détails de la livraison'),
+          title: const Text('Détails de la Livraison'),
           content: Text(
-            'Tournée : ${delivery['tournee_id']}\n'
+            'Nom : ${delivery['adherent']}\n'
+            'Adresse : ${delivery['adresse_id']}\n'
+            'Dépôt : ${delivery['depot']}\n'
             'Produit : ${delivery['produit']}\n'
             'Quantité : ${delivery['qte']}',
           ),
