@@ -38,7 +38,9 @@ class _HomePageState extends State<HomePage> {
     HistoriquePage(
       adherentId: 47476,
     ),
-    NotificationsPage(),
+    NotificationPage(
+      adherentId: 47476,
+    ),
   ];
 
   // Fonction pour changer de page
@@ -284,16 +286,110 @@ class _HistoriquePageState extends State<HistoriquePage> {
 }
 
 // Page des Notifications
-class NotificationsPage extends StatelessWidget {
-  const NotificationsPage({super.key});
+class NotificationPage extends StatefulWidget {
+  final int adherentId; // ID de l'adhérent
+
+  const NotificationPage({super.key, required this.adherentId});
+
+  @override
+  _NotificationPageState createState() => _NotificationPageState();
+}
+
+class _NotificationPageState extends State<NotificationPage> {
+  final String baseUrl =
+      'https://qjnieztpwnwroinqrolm.supabase.co/rest/v1/detail_livraisons';
+  final String apiKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqbmllenRwd253cm9pbnFyb2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc4MTEwNTAsImV4cCI6MjA1MzM4NzA1MH0.orLZFmX3i_qR0H4H6WwhUilNf5a1EAfrFhbbeRvN41M';
+
+  late Future<List<dynamic>> _deliveredOrders;
+
+  @override
+  void initState() {
+    super.initState();
+    _deliveredOrders = fetchDeliveredOrders();
+  }
+
+  Future<List<dynamic>> fetchDeliveredOrders() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl?adherent_id=eq.${widget.adherentId}'
+          '&livre=eq.livré' // Filtre : seulement les paniers livrés
+          '&order=jour.desc'),
+      headers: {
+        'apikey': apiKey,
+        'Authorization': 'Bearer $apiKey',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Erreur lors du chargement des notifications');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Notifications',
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Notifications')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: FutureBuilder<List<dynamic>>(
+          future: _deliveredOrders,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Erreur : ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('Aucune nouvelle notification.'));
+            } else {
+              final deliveries = snapshot.data!;
+              return ListView.builder(
+                itemCount: deliveries.length,
+                itemBuilder: (context, index) {
+                  final delivery = deliveries[index];
+                  return Card(
+                    elevation: 4,
+                    margin: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: ListTile(
+                      title: Text('Panier livré le ${delivery['jour']}'),
+                      subtitle: Text(
+                          'Dépôt : ${delivery['depot']}\nProduit : ${delivery['produit']} - Qté: ${delivery['qte']}'),
+                      onTap: () {
+                        _showDeliveryDetails(context, delivery);
+                      },
+                    ),
+                  );
+                },
+              );
+            }
+          },
+        ),
       ),
+    );
+  }
+
+  void _showDeliveryDetails(
+      BuildContext context, Map<String, dynamic> delivery) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Détails de la Livraison'),
+          content: Text(
+            'Nom : ${delivery['adherent']}\n'
+            'Dépôt : ${delivery['depot']}\n'
+            'Produit : ${delivery['produit']}\n'
+            'Quantité : ${delivery['qte']}',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Fermer'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
