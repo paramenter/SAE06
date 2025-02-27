@@ -21,6 +21,8 @@ class MyApp extends StatelessWidget {
 }
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -46,7 +48,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Accueil Client'),
+        title: const Text('Accueil Client'),
       ),
       body: _pages[_selectedIndex], // Affiche la page correspondant à l'index
       bottomNavigationBar: BottomNavigationBar(
@@ -73,6 +75,8 @@ class _HomePageState extends State<HomePage> {
 
 // Page du Tableau de bord
 class DashboardPage extends StatefulWidget {
+  const DashboardPage({super.key});
+
   @override
   _DashboardPageState createState() => _DashboardPageState();
 }
@@ -111,11 +115,11 @@ class _DashboardPageState extends State<DashboardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Tableau de bord des Livraisons',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
 
             // Utilisation de FutureBuilder pour afficher les données dynamiques
             Expanded(
@@ -123,13 +127,13 @@ class _DashboardPageState extends State<DashboardPage> {
                 future: fetchDeliveries(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+                    return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
                     return Center(
                       child: Text('Erreur : ${snapshot.error}'),
                     );
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text('Aucune livraison trouvée.'));
+                    return const Center(child: Text('Aucune livraison trouvée.'));
                   } else {
                     // Affiche la liste des livraisons
                     final deliveries = snapshot.data!;
@@ -139,11 +143,11 @@ class _DashboardPageState extends State<DashboardPage> {
                         final delivery = deliveries[index];
                         return Card(
                           elevation: 4,
-                          margin: EdgeInsets.symmetric(vertical: 8.0),
+                          margin: const EdgeInsets.symmetric(vertical: 8.0),
                           child: ListTile(
                             title: Text(
                               'Tournée ${delivery['tournee_id']}',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text(
                               'Produit : ${delivery['produit']} - Quantité : ${delivery['qte']}',
@@ -172,7 +176,7 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Détails de la livraison'),
+          title: const Text('Détails de la livraison'),
           content: Text(
             'Tournée : ${delivery['tournee_id']}\n'
             'Produit : ${delivery['produit']}\n'
@@ -181,7 +185,7 @@ class _DashboardPageState extends State<DashboardPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Fermer'),
+              child: const Text('Fermer'),
             ),
           ],
         );
@@ -192,6 +196,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
 // Page de l'Historique
 class HistoriquePage extends StatefulWidget {
+  const HistoriquePage({super.key});
+
   @override
   _HistoriquePageState createState() => _HistoriquePageState();
 }
@@ -230,11 +236,11 @@ class _HistoriquePageState extends State<HistoriquePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Historique des Livraisons',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
 
             // Utilisation de FutureBuilder pour afficher les données
             Expanded(
@@ -242,13 +248,13 @@ class _HistoriquePageState extends State<HistoriquePage> {
                 future: fetchHistoricalDeliveries(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+                    return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
                     return Center(
                       child: Text('Erreur : ${snapshot.error}'),
                     );
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text('Aucun historique trouvé.'));
+                    return const Center(child: Text('Aucun historique trouvé.'));
                   } else {
                     final deliveries = snapshot.data!;
                     return ListView.builder(
@@ -257,11 +263,11 @@ class _HistoriquePageState extends State<HistoriquePage> {
                         final delivery = deliveries[index];
                         return Card(
                           elevation: 4,
-                          margin: EdgeInsets.symmetric(vertical: 8.0),
+                          margin: const EdgeInsets.symmetric(vertical: 8.0),
                           child: ListTile(
                             title: Text(
                               'Tournée ${delivery['tournee_id']} - Semaine ${delivery['semaine']}',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text(
                               'Produit : ${delivery['produit']} - Quantité : ${delivery['qte']}',
@@ -290,7 +296,7 @@ class _HistoriquePageState extends State<HistoriquePage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Détails de la livraison'),
+          title: const Text('Détails de la livraison'),
           content: Text(
             'Tournée : ${delivery['tournee_id']}\n'
             'Semaine : ${delivery['semaine']}\n'
@@ -300,7 +306,7 @@ class _HistoriquePageState extends State<HistoriquePage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Fermer'),
+              child: const Text('Fermer'),
             ),
           ],
         );
@@ -311,9 +317,11 @@ class _HistoriquePageState extends State<HistoriquePage> {
 
 // Page des Notifications
 class NotificationsPage extends StatelessWidget {
+  const NotificationsPage({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return const Center(
       child: Text(
         'Notifications',
         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),

@@ -19,6 +19,8 @@
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
+              android:name="com.google.android.geo.AIzaSyBkemoQQxqQxOQs6-5_RUanatIYYB0Ds40"
+            android:value="AIzaSyBkemoQQxqQxOQs6-5_RUanatIYYB0Ds40" 
               />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -42,4 +44,6 @@
             <data android:mimeType="text/plain"/>
         </intent>
     </queries>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 </manifest>
