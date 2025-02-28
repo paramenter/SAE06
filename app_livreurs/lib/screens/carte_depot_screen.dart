@@ -8,7 +8,10 @@ class CarteDepotScreen extends StatefulWidget {
   final String tourneeId;
   final String depotName;
 
-  CarteDepotScreen({required this.depotId, required this.depotName, required this.tourneeId});
+  CarteDepotScreen(
+      {required this.depotId,
+      required this.depotName,
+      required this.tourneeId});
 
   @override
   _CarteDepotScreenState createState() => _CarteDepotScreenState();
@@ -33,8 +36,8 @@ class _CarteDepotScreenState extends State<CarteDepotScreen> {
         'https://qjnieztpwnwroinqrolm.supabase.co/rest/v1/detail_depots?depot_id=eq.${widget.depotId}',
       ),
       headers: {
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqbmllenRwd253cm9pbnFyb2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc4MTEwNTAsImV4cCI6MjA1MzM4NzA1MH0.orLZFmX3i_qR0H4H6WwhUilNf5a1EAfrFhbbeRvN41M',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqbmllenRwd253cm9pbnFyb2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc4MTEwNTAsImV4cCI6MjA1MzM4NzA1MH0.orLZFmX3i_qR0H4H6WwhUilNf5a1EAfrFhbbeRvN41M',
+        'apikey': 'TON_API_KEY_SUPABASE',
+        'Authorization': 'Bearer TON_API_KEY_SUPABASE',
       },
     );
 
@@ -43,7 +46,6 @@ class _CarteDepotScreenState extends State<CarteDepotScreen> {
       if (data.isNotEmpty) {
         setState(() {
           depotDetails = data[0];
-          // Extract coordinates from the response
           if (depotDetails!['localisation'] != null) {
             double longitude = depotDetails!['localisation']['coordinates'][0];
             double latitude = depotDetails!['localisation']['coordinates'][1];
@@ -63,8 +65,10 @@ class _CarteDepotScreenState extends State<CarteDepotScreen> {
         'https://qjnieztpwnwroinqrolm.supabase.co/rest/v1/detail_livraisons?jour=eq.$today&tournee_id=eq.${widget.tourneeId}&depot_id=eq.${widget.depotId}',
       ),
       headers: {
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqbmllenRwd253cm9pbnFyb2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc4MTEwNTAsImV4cCI6MjA1MzM4NzA1MH0.orLZFmX3i_qR0H4H6WwhUilNf5a1EAfrFhbbeRvN41M',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqbmllenRwd253cm9pbnFyb2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc4MTEwNTAsImV4cCI6MjA1MzM4NzA1MH0.orLZFmX3i_qR0H4H6WwhUilNf5a1EAfrFhbbeRvN41M',
+        'apikey':
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqbmllenRwd253cm9pbnFyb2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc4MTEwNTAsImV4cCI6MjA1MzM4NzA1MH0.orLZFmX3i_qR0H4H6WwhUilNf5a1EAfrFhbbeRvN41M',
+        'Authorization':
+            'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqbmllenRwd253cm9pbnFyb2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc4MTEwNTAsImV4cCI6MjA1MzM4NzA1MH0.orLZFmX3i_qR0H4H6WwhUilNf5a1EAfrFhbbeRvN41M',
       },
     );
 
@@ -100,6 +104,64 @@ class _CarteDepotScreenState extends State<CarteDepotScreen> {
     }
   }
 
+  Future<void> _envoyerNotification(
+      String livraisonId, String adherentId) async {
+    const String serverKey = "TON_SERVER_KEY_FCM";
+    final String fcmUrl = "https://fcm.googleapis.com/fcm/send";
+
+    final response = await http.get(
+      Uri.parse(
+        'https://qjnieztpwnwroinqrolm.supabase.co/rest/v1/utilisateurs?adherent_id=eq.$adherentId',
+      ),
+      headers: {
+        'apikey':
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqbmllenRwd253cm9pbnFyb2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc4MTEwNTAsImV4cCI6MjA1MzM4NzA1MH0.orLZFmX3i_qR0H4H6WwhUilNf5a1EAfrFhbbeRvN41M',
+        'Authorization':
+            'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqbmllenRwd253cm9pbnFyb2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc4MTEwNTAsImV4cCI6MjA1MzM4NzA1MH0.orLZFmX3i_qR0H4H6WwhUilNf5a1EAfrFhbbeRvN41M',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> utilisateurs = jsonDecode(response.body);
+      if (utilisateurs.isNotEmpty && utilisateurs[0]['fcm_token'] != null) {
+        final String fcmToken = utilisateurs[0]['fcm_token'];
+
+        final notificationBody = {
+          "to": fcmToken,
+          "notification": {
+            "title": "Livraison effectuée ✅",
+            "body": "Votre panier a été livré au dépôt ${widget.depotName}.",
+            "click_action": "FLUTTER_NOTIFICATION_CLICK"
+          },
+          "data": {
+            "livraison_id": livraisonId,
+            "depot": widget.depotName,
+            "date": DateTime.now().toIso8601String(),
+          }
+        };
+
+        final responseNotif = await http.post(
+          Uri.parse(fcmUrl),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "key=$serverKey",
+          },
+          body: jsonEncode(notificationBody),
+        );
+
+        if (responseNotif.statusCode == 200) {
+          print("✅ Notification envoyée avec succès !");
+        } else {
+          print("❌ Erreur lors de l'envoi de la notification");
+        }
+      } else {
+        print("❌ Aucun token FCM trouvé pour cet adhérent.");
+      }
+    } else {
+      print("❌ Erreur lors de la récupération du token FCM.");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,90 +177,7 @@ class _CarteDepotScreenState extends State<CarteDepotScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Depot Information
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Dépôt: ${widget.depotName}',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            'ID du Dépôt: ${widget.depotId}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            'Adresse: ${depotDetails?['adresse'] ?? 'Non disponible'}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            'Ville: ${depotDetails?['ville'] ?? 'Non disponible'}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            'Code Postal: ${depotDetails?['code_postal'] ?? 'Non disponible'}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            'Téléphone: ${depotDetails?['telephone'] ?? 'Non disponible'}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            'Email: ${depotDetails?['email'] ?? 'Non disponible'}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          if (depotCoordinates != null)
-                            ElevatedButton(
-                              onPressed: _openGoogleMaps,
-                              child: Text('Ouvrir dans Google Maps'),
-                              style: ElevatedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  // Products List
+                  // Liste des produits avec envoi de notification
                   Text(
                     'Produits à Livrer',
                     style: TextStyle(
@@ -247,7 +226,12 @@ class _CarteDepotScreenState extends State<CarteDepotScreen> {
                               ),
                             ],
                           ),
-                          trailing: Icon(Icons.shopping_basket, size: 24),
+                          trailing: IconButton(
+                            icon: Icon(Icons.shopping_basket, size: 24),
+                            onPressed: () => _envoyerNotification(
+                                product['livraison_id'],
+                                product['adherent_id']),
+                          ),
                         ),
                       );
                     },

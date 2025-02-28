@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -33,15 +37,53 @@ class _HomePageState extends State<HomePage> {
   // Liste des pages à afficher
   final List<Widget> _pages = [
     DashboardPage(
-      adherentId: 47476,
+      adherentId: 260171,
     ),
     HistoriquePage(
-      adherentId: 47476,
+      adherentId: 260171,
     ),
     NotificationPage(
-      adherentId: 47476,
+      adherentId: 260171,
     ),
   ];
+
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _configureFirebaseMessaging();
+  }
+
+  void _configureFirebaseMessaging() {
+    _firebaseMessaging.getToken().then((token) {
+      print("FCM Token: $token");
+    });
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print("Notification reçue: ${message.notification?.title}");
+      _showNotification(message);
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print("Notification ouverte: ${message.notification?.title}");
+      _handleNotificationClick(message);
+    });
+  }
+
+  void _showNotification(RemoteMessage message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message.notification?.title ?? "Nouvelle notification"),
+      ),
+    );
+  }
+
+  void _handleNotificationClick(RemoteMessage message) {
+    setState(() {
+      _selectedIndex = 2;
+    });
+  }
 
   // Fonction pour changer de page
   void _onItemTapped(int index) {
